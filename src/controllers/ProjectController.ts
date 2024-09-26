@@ -5,6 +5,8 @@ export class ProjectController {
 
     static createProject = async (req: Request, res: Response) => {
         const project = new Project(req.body); // Creamos la instancia de Project
+        // Asignar usuario quien creo
+        project.manager = req.user.id;
         try {
             await project.save();
             // await Project.create(req.body)
@@ -17,7 +19,11 @@ export class ProjectController {
 
     static getAllProjects = async (req: Request, res: Response) => {
         try {
-            const projects = await Project.find({}); // Obtener todos los registros
+            const projects = await Project.find({
+                $or: [// Colocar condiciones
+                    {manager: {$in: req.user.id}}
+                ]
+            }); // Obtener todos los registros
             res.json(projects)
         } catch (error) {
             console.log(error)
@@ -30,6 +36,11 @@ export class ProjectController {
             const project = await Project.findById(id).populate('tasks'); // Obtener el registro x id
             if (!project) {
                 const error = new Error('Proyecto no encontrado')
+                return res.status(404).json({error: error.message})
+            }
+
+            if (project.manager.toString() !== req.user.id.toString()) {
+                const error = new Error('Acción no válida')
                 return res.status(404).json({error: error.message})
             }
             res.json(project)
@@ -46,6 +57,11 @@ export class ProjectController {
                 const error = new Error('Proyecto no encontrado')
                 return res.status(404).json({error: error.message})
             }
+
+            if (project.manager.toString() !== req.user.id.toString()) {
+                const error = new Error('Acción no válida')
+                return res.status(404).json({error: error.message})
+            }
             await project.save(); // Guardar
             res.send('Proyecto actualizado correctamente')
         } catch (error) {
@@ -59,6 +75,11 @@ export class ProjectController {
             const project = await Project.findById(id); // Obtener el registro x id 
             if (!project) {
                 const error = new Error('Proyecto no encontrado')
+                return res.status(404).json({error: error.message})
+            }
+
+            if (project.manager.toString() !== req.user.id.toString()) {
+                const error = new Error('Acción no válida')
                 return res.status(404).json({error: error.message})
             }
             await project.deleteOne(); // Guardar

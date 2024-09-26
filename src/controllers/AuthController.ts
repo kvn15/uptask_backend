@@ -4,6 +4,7 @@ import Token from "../models/Token"
 import { checkPassword, hashPassword } from "../utils/auth";
 import { generateToken } from "../utils/token";
 import { AuthEmail } from "../emails/AuthEmail";
+import { generateJWT } from "../utils/jwt";
 
 export class AuthController {
 
@@ -106,7 +107,9 @@ export class AuthController {
                 return res.status(401).json({error: error.message})
             }
 
-            res.send("Authenticado...");
+            const token = generateJWT({id: user.id});
+
+            res.send(token);
         } catch (error) {
             res.status(500).json({error: "Hubo un error"})
         }
@@ -179,5 +182,48 @@ export class AuthController {
         } catch (error) {
             res.status(500).json({error: "Hubo un error"})
         }
+    }
+
+    static validateToken = async (req: Request, res: Response) => {
+        try {
+            const { token } = req.body;
+        
+            const tokenExists = await Token.findOne({token});
+
+            if (!tokenExists) {
+                const error = new Error("Token no válido");
+                return res.status(404).json({error: error.message})
+            }
+
+            res.send("Token válido, Define tu nuevo password");
+        } catch (error) {
+            res.status(500).json({error: "Hubo un error"})
+        }
+    }
+
+    static updatePasswordWithToken = async (req: Request, res: Response) => {
+        try {
+            const { token } = req.params;
+        
+            const tokenExists = await Token.findOne({token});
+
+            if (!tokenExists) {
+                const error = new Error("Token no válido");
+                return res.status(404).json({error: error.message})
+            }
+
+            const user = await User.findById(tokenExists.user);
+            user.password = await hashPassword(req.body.password);
+
+            await Promise.allSettled([user.save(), tokenExists.deleteOne()]);
+
+            res.send("El password se modficó correctamente");
+        } catch (error) {
+            res.status(500).json({error: "Hubo un error"})
+        }
+    }
+
+    static user = async (req: Request, res: Response) => {
+        return res.json(req.user);
     }
 }

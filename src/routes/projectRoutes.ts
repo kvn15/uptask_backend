@@ -5,8 +5,11 @@ import { handleInputErrors } from "../middleware/validation";
 import { TaskController } from "../controllers/TaskController";
 import { validateProjectExists } from "../middleware/project";
 import { taskBelongsToProject, validateTaskExists } from "../middleware/task";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
+
+router.use(authenticate); // Indico que las rutas de esta instancia tenga el middleware de autenticacion
 
 router.post('/', 
     // Agregar validaciones
@@ -22,7 +25,7 @@ router.post('/',
 
 router.get('/', ProjectController.getAllProjects)
 
-router.get('/:id', 
+router.get('/:id',
     param('id')
         .isMongoId().withMessage('Id no válido'),
     handleInputErrors, //Middelware para validar
