@@ -8,7 +8,8 @@ export type ProjectType = Document & {
     clientName: string,
     description: string,
     tasks: PopulatedDoc<TaskType & Document>[],
-    manager: PopulatedDoc<IUser & Document>
+    manager: PopulatedDoc<IUser & Document>,
+    team: PopulatedDoc<IUser & Document>[]
 }
 
 // Definir el modelo para mongoose
@@ -37,7 +38,13 @@ const ProjectSchema: Schema = new Schema({
     manager: {
         type: Types.ObjectId,
         ref: 'User'
-    }
+    },
+    team: [
+        {
+            type: Types.ObjectId,
+            ref: 'User'
+        }
+    ]
 }, {timestamps: true}) // Agregar la fecha cuando creo y modifico
 
 // registrar schema en mongoose
