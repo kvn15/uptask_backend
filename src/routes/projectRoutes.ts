@@ -6,6 +6,7 @@ import { TaskController } from "../controllers/TaskController";
 import { validateProjectExists } from "../middleware/project";
 import { taskBelongsToProject, validateTaskExists } from "../middleware/task";
 import { authenticate } from "../middleware/auth";
+import { TeamMemberController } from "../controllers/TeamController";
 
 const router = Router();
 
@@ -105,5 +106,32 @@ router.post('/:projectId/tasks/:taskId/status',
     handleInputErrors, //Middelware para validar
     TaskController.updateStatus
 )
+
+/* Routes for teams */
+router.post('/:projectId/team/find',
+    body('email')
+        .isEmail().toLowerCase().withMessage('E-mail no válido'),
+    handleInputErrors, //Middelware para validar
+    TeamMemberController.finMemberByEmail
+)
+
+router.get('/:projectId/team',
+    TeamMemberController.getProjectTeam
+)
+
+router.post('/:projectId/team',
+    body('id')
+        .isMongoId().withMessage('Id no válido'),
+    handleInputErrors, //Middelware para validar
+    TeamMemberController.addMemberById
+)
+
+router.delete('/:projectId/team',
+    body('id')
+        .isMongoId().withMessage('Id no válido'),
+    handleInputErrors, //Middelware para validar
+    TeamMemberController.removeMemberById
+)
+
 
 export default router;
