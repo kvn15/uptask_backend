@@ -1,6 +1,7 @@
 import mongoose, {Schema, Document, PopulatedDoc, Types} from 'mongoose'
-import { TaskType } from './Task'
+import Task, { TaskType } from './Task'
 import { IUser } from './User'
+import Note from './Note'
 
 //Document -> Hereda todo el tipado de document
 export type ProjectType = Document & {
@@ -46,6 +47,19 @@ const ProjectSchema: Schema = new Schema({
         }
     ]
 }, {timestamps: true}) // Agregar la fecha cuando creo y modifico
+
+// Middleware en moongosse
+ProjectSchema.pre('deleteOne', {document: true, query: false}, async function () {
+    const projectId = this._id;
+    if (!projectId) return;
+
+    const tasks = await Task.find({ project: projectId });
+    for(const task of tasks) {
+        await Note.deleteMany({task: task.id});
+    }
+
+    await Task.deleteMany({project: projectId});
+})
 
 // registrar schema en mongoose
 const Project = mongoose.model<ProjectType>('Project', ProjectSchema)

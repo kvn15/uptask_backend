@@ -4,9 +4,10 @@ import { ProjectController } from "../controllers/ProjectController";
 import { handleInputErrors } from "../middleware/validation";
 import { TaskController } from "../controllers/TaskController";
 import { validateProjectExists } from "../middleware/project";
-import { taskBelongsToProject, validateTaskExists } from "../middleware/task";
+import { hasAuthorization, taskBelongsToProject, validateTaskExists } from "../middleware/task";
 import { authenticate } from "../middleware/auth";
 import { TeamMemberController } from "../controllers/TeamController";
+import { NoteController } from "../controllers/NoteController";
 
 const router = Router();
 
@@ -80,6 +81,7 @@ router.get('/:projectId/tasks/:taskId',
 );
 
 router.put('/:projectId/tasks/:taskId',
+    hasAuthorization,
     param('taskId')
         .isMongoId().withMessage('Id no válido'),
     // Agregar validaciones
@@ -92,6 +94,7 @@ router.put('/:projectId/tasks/:taskId',
 );
 
 router.delete('/:projectId/tasks/:taskId',
+    hasAuthorization,
     param('taskId')
         .isMongoId().withMessage('Id no válido'),
     handleInputErrors, //Middelware para validar
@@ -126,12 +129,29 @@ router.post('/:projectId/team',
     TeamMemberController.addMemberById
 )
 
-router.delete('/:projectId/team',
-    body('id')
+router.delete('/:projectId/team/:userId',
+    param('userId')
         .isMongoId().withMessage('Id no válido'),
     handleInputErrors, //Middelware para validar
     TeamMemberController.removeMemberById
 )
+/* Route for Notes */
 
+router.post('/:projectId/tasks/:taskId/note',
+    body('content')
+        .notEmpty().withMessage('El contenido de la nota es obligatorio'),
+    handleInputErrors, //Middelware para validar
+    NoteController.createNote
+)
+
+router.get('/:projectId/tasks/:taskId/note',
+    NoteController.getTaskNotes
+)
+
+router.delete('/:projectId/tasks/:taskId/notes/:noteId',
+    param('noteId').isMongoId().withMessage('Id no valido'),
+    handleInputErrors, //Middelware para validar
+    NoteController.deleteNote
+)
 
 export default router;

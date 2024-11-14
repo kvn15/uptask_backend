@@ -11,10 +11,10 @@ export class TeamMemberController {
 
         if (!user) {
             const error = new Error("Usuario no encontrado")
-            res.status(404).json({ error: error.message })
+            return res.status(404).json({ error: error.message })
         }
 
-        res.json(user)
+        return res.json(user)
     }
 
     static getProjectTeam = async (req: Request, res: Response) => {
@@ -23,7 +23,7 @@ export class TeamMemberController {
             select: 'id email name'
         });
 
-        res.json(project.team)
+        return res.json(project.team)
     }
 
     static addMemberById = async (req: Request, res: Response) => {
@@ -34,32 +34,32 @@ export class TeamMemberController {
 
         if (!user) {
             const error = new Error("Usuario no encontrado")
-            res.status(404).json({ error: error.message })
+            return res.status(404).json({ error: error.message })
         }
 
         if (req.project.team.some(team => team.toString() === user.id.toString())) {
             const error = new Error("El Usuario ya existe en el proyecto")
-            res.status(409).json({ error: error.message })
+            return res.status(409).json({ error: error.message })
         }
 
         req.project.team.push(user.id);
         await req.project.save();
 
-        res.send("Usuario agregado correctamente")
+        return res.send("Usuario agregado correctamente")
     }
 
     static removeMemberById = async (req: Request, res: Response) => {
-        const { id } = req.body;
+        const { userId } = req.params;
 
-        if (!req.project.team.some(team => team.toString() === id)) {
+        if (!req.project.team.some(team => team.toString() === userId)) {
             const error = new Error("El Usuario no existe en el proyecto")
-            res.status(409).json({ error: error.message })
+            return res.status(409).json({ error: error.message })
         }
 
-        req.project.team = req.project.team.filter(team => team.toString() !== id);
+        req.project.team = req.project.team.filter(team => team.toString() !== userId);
 
         await req.project.save();
 
-        res.send("Usuario eliminado correctamente")
+        return res.send("Usuario eliminado correctamente")
     }
 }

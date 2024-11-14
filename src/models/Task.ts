@@ -1,4 +1,5 @@
 import mongoose, {Schema, Document, Types} from 'mongoose'
+import Note from './Note';
 
 const taskStatus = {
     PENDING: 'pending',
@@ -15,7 +16,12 @@ export type TaskType = Document & {
     name: string,
     description: string,
     project: Types.ObjectId,
-    status: TaskStatus
+    status: TaskStatus,
+    completedBy: {
+        user: Types.ObjectId,
+        status: TaskStatus
+    }[],
+    notes: Types.ObjectId[]
 }
 
 export const TaskSchema: Schema = new Schema({
@@ -37,8 +43,35 @@ export const TaskSchema: Schema = new Schema({
         type: String,
         enum: Object.values(taskStatus), // Indicar que estados puede aceptar el campo status
         default: taskStatus.PENDING
-    }
+    },
+    completedBy: [
+        {
+            user: {
+                type: Types.ObjectId, 
+                ref: 'User',
+                default: null
+            },
+            status: {
+                type: String,
+                enum: Object.values(taskStatus), // Indicar que estados puede aceptar el campo status
+                default: taskStatus.PENDING
+            }
+        }
+    ],
+    notes: [
+        {
+            type: Types.ObjectId,
+            ref: 'Note'
+        }
+    ]
 }, {timestamps: true}) // Agregar la fecha cuando creo y modifico
+
+// Middleware en moongosse
+TaskSchema.pre('deleteOne', {document: true, query: false}, async function () {
+    const taskId = this._id;
+    if (!taskId) return;
+    await Note.deleteMany({task: taskId});
+})
 
 const Task = mongoose.model<TaskType>('Task', TaskSchema);
 
